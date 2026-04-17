@@ -1,6 +1,6 @@
 Toolkit de Google Dorking direto no navegador, feito pra recon e bug bounty.
 
-Reúne os melhores dorks que fui coletando ao longo de várias pesquisas — focado em encontrar arquivos expostos, painéis de login, vazamentos de configuração, parâmetros vulneráveis e mais.
+Reúne os melhores dorks que fui coletando ao longo de várias pesquisas, focado em encontrar arquivos expostos, painéis de login, vazamentos de configuração, parâmetros vulneráveis e mais.
 
 ## Funcionalidades
 - Dorks organizados por categoria com badges de risco
