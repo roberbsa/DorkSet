@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DORKSET v2 — by roberbsa/trustm3</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:    #07070f;
+    --bg2:   #0d0d1a;
+    --bg3:   #111120;
+    --red:   #ff2244;
+    --red2:  #cc1133;
+    --cyan:  #00ffe7;
+    --green: #39ff80;
+    --yellow:#ffd700;
+    --orange:#ff8c00;
+    --text:  #c8d0e0;
+    --dim:   #4a5060;
+    --border:#1a1a30;
+    --glow-red:  0 0 8px #ff224455, 0 0 24px #ff224420;
+    --glow-cyan: 0 0 8px #00ffe755, 0 0 24px #00ffe720;
+    --glow-green:0 0 8px #39ff8055, 0 0 24px #39ff8020;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Share Tech Mono',monospace;min-height:100vh;overflow-x:hidden;}
+  body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.12) 2px,rgba(0,0,0,0.12) 4px);pointer-events:none;z-index:9999;}
+
+  /* BOOT */
+  #bootScreen{position:fixed;inset:0;background:var(--bg);z-index:10000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:0.72rem;color:var(--cyan);padding:20px;transition:opacity 0.5s;}
+  #bootScreen.hidden{opacity:0;pointer-events:none;}
+  .boot-line{opacity:0;transition:opacity 0.1s;}
+  .boot-line.show{opacity:1;}
+  #bootLogo{font-family:'Orbitron',sans-serif;font-weight:900;font-size:2rem;color:var(--red);text-shadow:var(--glow-red);letter-spacing:6px;margin-bottom:18px;display:none;}
+  #bootLogo span{color:var(--cyan);text-shadow:var(--glow-cyan);}
+
+  /* MAIN */
+  .container{max-width:980px;margin:0 auto;padding:24px 18px 70px;}
+
+  /* HEADER */
+  header{display:flex;align-items:flex-start;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:14px;margin-bottom:24px;flex-wrap:wrap;gap:10px;}
+  .logo{font-family:'Orbitron',sans-serif;font-weight:900;font-size:1.45rem;color:var(--red);text-shadow:var(--glow-red);letter-spacing:4px;}
+  .logo span{color:var(--cyan);text-shadow:var(--glow-cyan);}
+  .author{font-size:0.6rem;color:var(--dim);letter-spacing:2px;margin-top:3px;}
+  .author b{color:var(--green);text-shadow:var(--glow-green);}
+  .header-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;}
+  .badge{font-size:0.6rem;color:var(--dim);border:1px solid var(--border);padding:3px 8px;letter-spacing:2px;}
+  .session-info{font-size:0.6rem;color:var(--dim);}
+  .session-info span{color:var(--yellow);}
+
+  /* TARGET */
+  .target-section{background:var(--bg2);border:1px solid var(--border);padding:16px 18px;margin-bottom:18px;position:relative;}
+  .target-section::before{content:'TARGET';position:absolute;top:-9px;left:14px;font-size:0.6rem;color:var(--red);background:var(--bg2);padding:0 6px;letter-spacing:3px;}
+  .target-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .target-input{flex:1;min-width:180px;background:var(--bg3);border:1px solid var(--border);border-left:2px solid var(--red);color:var(--cyan);font-family:'Share Tech Mono',monospace;font-size:0.92rem;padding:9px 12px;outline:none;transition:all 0.2s;}
+  .target-input:focus{border-color:var(--cyan);box-shadow:var(--glow-cyan);}
+  .target-input::placeholder{color:var(--dim);}
+  .engine-tag{font-size:0.6rem;color:var(--dim);white-space:nowrap;border:1px solid var(--border);padding:5px 10px;cursor:pointer;transition:all 0.2s;}
+  .engine-tag.active,.engine-tag:hover{border-color:var(--cyan);color:var(--cyan);}
+  .engine-tag.shodan.active,.engine-tag.shodan:hover{border-color:var(--orange);color:var(--orange);}
+  .target-history{margin-top:8px;display:flex;flex-wrap:wrap;gap:5px;min-height:14px;}
+  .hist-chip{font-size:0.6rem;color:var(--dim);border:1px solid var(--border);padding:2px 8px;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:6px;}
+  .hist-chip:hover{border-color:var(--cyan);color:var(--cyan);}
+  .hist-del{color:var(--red);font-size:0.65rem;opacity:0.5;}
+  .hist-del:hover{opacity:1;}
+  .mem-bar{margin-top:6px;font-size:0.64rem;color:var(--dim);}
+  .mem-bar span{color:var(--yellow);}
+
+  /* CUSTOM DORK */
+  .custom-section{background:var(--bg2);border:1px solid var(--border);padding:14px 16px;margin-bottom:18px;position:relative;}
+  .custom-section::before{content:'CUSTOM DORK';position:absolute;top:-9px;left:14px;font-size:0.6rem;color:var(--cyan);background:var(--bg2);padding:0 6px;letter-spacing:3px;}
+  .custom-row{display:flex;gap:8px;}
+  .custom-input{flex:1;background:var(--bg3);border:1px solid var(--border);border-left:2px solid var(--cyan);color:var(--cyan);font-family:'Share Tech Mono',monospace;font-size:0.8rem;padding:8px 12px;outline:none;transition:all 0.2s;}
+  .custom-input:focus{box-shadow:var(--glow-cyan);}
+  .custom-input::placeholder{color:var(--dim);}
+  .add-btn{background:transparent;border:1px solid var(--cyan);color:var(--cyan);font-family:'Share Tech Mono',monospace;font-size:0.7rem;letter-spacing:2px;padding:8px 14px;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
+  .add-btn:hover{background:rgba(0,255,231,0.1);}
+  .custom-list{margin-top:8px;display:flex;flex-direction:column;gap:4px;}
+  .custom-dork-item{display:flex;align-items:center;justify-content:space-between;background:var(--bg3);border:1px solid var(--border);padding:5px 10px;font-size:0.7rem;}
+  .custom-dork-item .ctext{color:var(--cyan);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .custom-dork-item .rm{color:var(--red);cursor:pointer;margin-left:10px;opacity:0.6;}
+  .custom-dork-item .rm:hover{opacity:1;}
+
+  /* CATEGORIES */
+  .section-label{font-size:0.6rem;letter-spacing:3px;color:var(--dim);margin-bottom:10px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;}
+  .section-label .count{color:var(--cyan);}
+  .select-actions{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap;}
+  .select-btn{font-size:0.6rem;letter-spacing:1px;color:var(--dim);cursor:pointer;border-bottom:1px solid transparent;transition:all 0.15s;}
+  .select-btn:hover{color:var(--cyan);border-color:var(--cyan);}
+  .sep{color:var(--border);}
+  .categories-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:18px;}
+  .cat-item{display:flex;align-items:center;gap:9px;background:var(--bg2);border:1px solid var(--border);padding:8px 10px;cursor:pointer;transition:all 0.15s;user-select:none;position:relative;overflow:hidden;}
+  .cat-item:hover{border-color:#252540;}
+  .cat-item.selected{border-color:var(--red);background:rgba(255,34,68,0.07);box-shadow:var(--glow-red);}
+  .cat-checkbox{width:13px;height:13px;border:1px solid var(--dim);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:0.58rem;color:#fff;transition:all 0.15s;z-index:1;}
+  .cat-item.selected .cat-checkbox{border-color:var(--red);background:var(--red);}
+  .cat-label{font-size:0.74rem;color:var(--text);z-index:1;flex:1;}
+  .cat-item.selected .cat-label{color:#fff;}
+  .risk-badge{font-size:0.5rem;letter-spacing:1px;padding:2px 5px;border:1px solid;z-index:1;flex-shrink:0;font-weight:bold;}
+  .risk-HIGH{color:var(--red);border-color:var(--red);background:rgba(255,34,68,0.1);}
+  .risk-MED{color:var(--yellow);border-color:var(--yellow);background:rgba(255,215,0,0.08);}
+  .risk-LOW{color:var(--dim);border-color:var(--dim);}
+
+  /* EXTENSIONS */
+  .ext-section{background:var(--bg2);border:1px solid var(--border);padding:12px 14px;margin-bottom:18px;position:relative;}
+  .ext-section::before{content:'FILE EXTENSIONS';position:absolute;top:-9px;left:14px;font-size:0.6rem;color:var(--red);background:var(--bg2);padding:0 6px;letter-spacing:3px;}
+  .ext-grid{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px;}
+  .ext-tag{border:1px solid var(--border);padding:3px 9px;font-size:0.66rem;cursor:pointer;transition:all 0.15s;color:var(--dim);}
+  .ext-tag:hover{border-color:#252540;color:var(--text);}
+  .ext-tag.selected{border-color:var(--cyan);color:var(--cyan);background:rgba(0,255,231,0.06);box-shadow:var(--glow-cyan);}
+
+  /* OPTIONS */
+  .options-row{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+  .toggle-opt{display:flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--border);padding:7px 12px;font-size:0.7rem;cursor:pointer;transition:all 0.2s;user-select:none;}
+  .toggle-opt.active{border-color:var(--cyan);color:var(--cyan);}
+  .toggle-dot{width:26px;height:13px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;position:relative;transition:background 0.2s;}
+  .toggle-dot::after{content:'';position:absolute;top:2px;left:2px;width:7px;height:7px;background:var(--dim);border-radius:50%;transition:all 0.2s;}
+  .toggle-opt.active .toggle-dot{background:rgba(0,255,231,0.15);border-color:var(--cyan);}
+  .toggle-opt.active .toggle-dot::after{background:var(--cyan);left:15px;}
+
+  /* PREVIEW */
+  .dork-preview{background:var(--bg2);border:1px solid var(--border);border-left:2px solid var(--cyan);padding:12px 14px;margin-bottom:18px;display:none;}
+  .dork-preview.visible{display:block;}
+  .dork-preview-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+  .dork-preview-label{color:var(--dim);font-size:0.58rem;letter-spacing:2px;}
+  .preview-actions{display:flex;gap:6px;}
+  .preview-btn{font-size:0.58rem;color:var(--dim);border:1px solid var(--border);padding:2px 8px;cursor:pointer;transition:all 0.15s;background:none;font-family:'Share Tech Mono',monospace;}
+  .preview-btn:hover{border-color:var(--cyan);color:var(--cyan);}
+  #dorkPreviewText{font-size:0.68rem;color:var(--cyan);line-height:1.9;}
+  #dorkPreviewText div{padding:1px 0;border-bottom:1px solid rgba(255,255,255,0.025);}
+  #dorkPreviewText div:last-child{border:none;}
+
+  /* LAUNCH */
+  .launch-btn{width:100%;padding:15px;background:var(--red);border:none;color:#fff;font-family:'Orbitron',sans-serif;font-weight:700;font-size:0.95rem;letter-spacing:4px;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:12px;position:relative;overflow:hidden;text-transform:uppercase;}
+  .launch-btn::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.1),transparent);transform:translateX(-100%);transition:transform 0.5s;}
+  .launch-btn:hover{background:var(--red2);box-shadow:var(--glow-red),0 4px 24px rgba(255,34,68,0.35);}
+  .launch-btn:hover::before{transform:translateX(100%);}
+  .launch-btn:active{transform:scale(0.997);}
+  .launch-footer{display:flex;justify-content:space-between;align-items:center;margin-top:8px;flex-wrap:wrap;gap:6px;}
+  .launch-info{font-size:0.64rem;color:var(--dim);}
+  .launch-info .highlight{color:var(--cyan);}
+  .export-btn{font-size:0.6rem;color:var(--dim);border:1px solid var(--border);padding:4px 10px;cursor:pointer;background:none;font-family:'Share Tech Mono',monospace;transition:all 0.2s;}
+  .export-btn:hover{border-color:var(--green);color:var(--green);}
+
+  /* TOAST */
+  #toast{position:fixed;bottom:22px;right:22px;background:var(--bg2);border:1px solid var(--cyan);color:var(--cyan);font-size:0.7rem;padding:9px 16px;z-index:99999;transform:translateY(60px);opacity:0;transition:all 0.3s;pointer-events:none;letter-spacing:1px;}
+  #toast.show{transform:translateY(0);opacity:1;}
+
+  .disclaimer{margin-top:26px;padding:10px 12px;border:1px solid #141428;font-size:0.6rem;color:var(--dim);line-height:1.7;}
+  .disclaimer strong{color:var(--red);}
+
+  @media(max-width:580px){
+    .categories-grid{grid-template-columns:1fr;}
+    .logo{font-size:1.1rem;}
+    .target-row{flex-direction:column;align-items:stretch;}
+  }
+</style>
+</head>
+<body>
+
+<div id="bootScreen">
+  <div id="bootLogo">DORK<span>SET</span></div>
+  <div id="bootLines"></div>
+</div>
+
+<div class="container" id="mainApp" style="opacity:0;transition:opacity 0.4s;">
+
+  <header>
+    <div>
+      <div class="logo">DORK<span>SET</span></div>
+      <div class="author">by <b>roberbsa/trustm3</b> &nbsp;·&nbsp; v2.0</div>
+    </div>
+    <div class="header-right">
+      <div class="badge">PASSIVE RECON</div>
+      <div class="session-info">SESSÃO: <span id="sessionCount">0</span> recons &nbsp;|&nbsp; <span id="totalDorksRun">0</span> dorks disparados</div>
+    </div>
+  </header>
+
+  <div class="target-section">
+    <div class="target-row">
+      <input type="text" class="target-input" id="targetInput" placeholder="site.com  OR  site:blob.core.windows.net" autocomplete="off" spellcheck="false">
+      <div class="engine-tag active" id="googleBtn" onclick="selectEngine('google')">GOOGLE</div>
+      <div class="engine-tag" id="bingBtn" onclick="selectEngine('bing')">BING</div>
+      <div class="engine-tag shodan" id="shodanBtn" onclick="selectEngine('shodan')">SHODAN</div>
+    </div>
+    <div class="target-history" id="targetHistory"></div>
+    <div class="mem-bar">ENGINE: <span id="engineLabel">Google</span> &nbsp;|&nbsp; TABS: <span id="tabCount">0</span> &nbsp;|&nbsp; ALVO: <span id="targetDisplay">—</span></div>
+  </div>
+
+  <div class="custom-section">
+    <div class="custom-row">
+      <input type="text" class="custom-input" id="customDorkInput" placeholder='site:{TARGET} inurl:seu-dork — use {TARGET} para substituição automática' autocomplete="off" spellcheck="false">
+      <button class="add-btn" onclick="addCustomDork()">+ ADD</button>
+    </div>
+    <div class="custom-list" id="customList"></div>
+  </div>
+
+  <div class="section-label">
+    <span>// CATEGORIAS DE RECON</span>
+    <span class="count" id="selCount">0 de 21 selecionadas</span>
+  </div>
+  <div class="select-actions">
+    <span class="select-btn" onclick="selectAll()">SELECIONAR TUDO</span>
+    <span class="sep">|</span>
+    <span class="select-btn" onclick="clearAll()">LIMPAR</span>
+    <span class="sep">|</span>
+    <span class="select-btn" onclick="selectByRisk('HIGH')" style="color:#ff2244">APENAS HIGH</span>
+    <span class="sep">|</span>
+    <span class="select-btn" onclick="selectByRisk('MED')" style="color:#ffd700">APENAS MEDIUM</span>
+  </div>
+  <div class="categories-grid" id="categoriesGrid"></div>
+
+  <div class="ext-section">
+    <div class="ext-grid" id="extGrid"></div>
+  </div>
+
+  <div class="options-row">
+    <div class="toggle-opt" id="wploginToggle" onclick="toggleOpt('wordpress')">
+      <div class="toggle-dot"></div><span>WordPress Mode</span>
+    </div>
+    <div class="toggle-opt" id="subToggle" onclick="toggleOpt('subdomains')">
+      <div class="toggle-dot"></div><span>Include Subdomains</span>
+    </div>
+    <div class="toggle-opt active" id="previewToggle" onclick="toggleOpt('preview')">
+      <div class="toggle-dot" style="background:rgba(0,255,231,0.15);border-color:var(--cyan)"></div><span>Preview</span>
+    </div>
+  </div>
+
+  <div class="dork-preview" id="dorkPreview">
+    <div class="dork-preview-header">
+      <div class="dork-preview-label">// DORKS GERADOS</div>
+      <div class="preview-actions">
+        <button class="preview-btn" onclick="toggleShowAll()" id="showAllBtn">VER TODOS</button>
+        <button class="preview-btn" onclick="copyAllDorks()">COPIAR TUDO</button>
+      </div>
+    </div>
+    <div id="dorkPreviewText"></div>
+  </div>
+
+  <button class="launch-btn" onclick="launchRecon()"><span>⚡</span> START RECON</button>
+  <div class="launch-footer">
+    <div class="launch-info">Pronto para abrir <span class="highlight" id="tabCountBottom">0</span> tab(s)</div>
+    <button class="export-btn" onclick="exportDorks()">⬇ EXPORT .TXT</button>
+  </div>
+
+  <div class="disclaimer">
+    <strong>⚠ IMPORTANTE:</strong> Esta ferramenta gera queries Google Dork e as abre em novas abas. Nenhuma requisição direta é feita aos sistemas alvo. Isto é reconhecimento <strong>passivo</strong>. Use com responsabilidade e somente em sistemas que você tem autorização para testar. Desenvolvido por <strong>roberbsa/trustm3</strong>.
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const categories = [
+  {id:'phpinfo',     risk:'MED', label:'phpinfo()',                    dorks:['site:{TARGET} ext:php "phpinfo()"','site:{TARGET} inurl:phpinfo.php']},
+  {id:'wayback',     risk:'LOW', label:'Wayback Machine data',         dorks:['site:web.archive.org/{TARGET}']},
+  {id:'subdoms',     risk:'LOW', label:'Subdomains discovery',         dorks:['site:*.{TARGET}','site:{TARGET} -www']},
+  {id:'pastebin',    risk:'HIGH',label:'Pastebin leaks',               dorks:['site:pastebin.com "{TARGET}"','site:paste2.org "{TARGET}"','site:paste.ee "{TARGET}"']},
+  {id:'github',      risk:'HIGH',label:'GitHub leaks',                 dorks:['site:github.com "{TARGET}"','site:gist.github.com "{TARGET}"','site:gitlab.com "{TARGET}"']},
+  {id:'passwords',   risk:'HIGH',label:'Passwords & Admin creds',      dorks:['site:{TARGET} intext:"password" filetype:log','site:{TARGET} inurl:admin intext:"password"','site:{TARGET} intitle:"admin" intext:"login"','site:{TARGET} intext:"db_password"']},
+  {id:'sensitivedata',risk:'HIGH',label:'Sensitive data exposure',     dorks:['site:{TARGET} ( "date of birth" OR confidential OR "internal use only" OR  "balance sheet" OR "profit and loss" OR  "banking details" OR  "source code" OR "national id" OR "top secret" ) (ext:pdf OR ext:doc OR ext:ppt OR ext:txt OR ext:csv)']},
+  {id:'apiendpoints',risk:'MED', label:'API Endpoints & Swagger',      dorks:['site:{TARGET} inurl:api','site:{TARGET} inurl:swagger','site:{TARGET} inurl:/api/v1','site:{TARGET} inurl:/api/v2','site:{TARGET} ext:json inurl:api']},
+  {id:'openredirect',risk:'MED', label:'Open Redirect Parameters',     dorks:['site:{TARGET} inurl:redirect=','site:{TARGET} inurl:url=http','site:{TARGET} inurl:next=http','site:{TARGET} inurl:return=http']},
+  {id:'apidirs',     risk:'MED', label:'API Directories & WSDLs',      dorks:['site:{TARGET} ext:wsdl','site:{TARGET} inurl:wsdl','site:{TARGET} filetype:wsdl','site:{TARGET} inurl:/soap']},
+  {id:'cloudbuckets',risk:'HIGH',label:'Cloud Buckets (S3/Azure/GCP)', dorks:['site:s3.amazonaws.com "{TARGET}"','site:blob.core.windows.net "{TARGET}"','site:storage.googleapis.com "{TARGET}"','"s3.amazonaws.com" "{TARGET}"']},
+  {id:'xssparameter', risk:'MED', label:'XSS Parameters',              dorks:['site:{TARGET} inurl:q= | inurl:s= | inurl:search= | inurl:query= | inurl:keyword= | inurl:lang= inurl:&']},
+  {id:'login',       risk:'LOW', label:'Login pages',                  dorks:['site:{TARGET} inurl:login | inurl:signin | intitle:login | intitle:signin | inurl:secure ']},
+  {id:'config',      risk:'HIGH',label:'Config files exposed',         dorks:['site:{TARGET} ext:config','site:{TARGET} ext:cfg','site:{TARGET} ext:ini','site:{TARGET} ext:yaml OR ext:yml']},
+  {id:'backup',      risk:'HIGH',label:'Backup files',                 dorks:['site:{TARGET} ext:bak','site:{TARGET} ext:backup','site:{TARGET} ext:old','site:{TARGET} ext:swp']},
+  {id:'errors',      risk:'MED', label:'Error msgs / Stack traces',    dorks:['site:{TARGET} "Stack Trace"','site:{TARGET} "Uncaught Exception"','site:{TARGET} "Warning: mysql"','site:{TARGET} "Fatal error"']},
+  {id:'emails',      risk:'MED', label:'Exposed email addresses',      dorks:['site:{TARGET} intext:"@{TARGET}"','"@{TARGET}" filetype:xls OR filetype:csv']},
+  {id:'fileupload',  risk:'LOW',label:'File Upload',                   dorks:['site:{TARGET} intext:"choose file" | intext:"select file" | intext:"upload PDF"']},
+  {id:'docinternal', risk:'MED', label:'Internal documents',           dorks:['site:{TARGET} ext:csv | ext:pdf | ext:xls | ext:xlsx | ext:doc | ext:docx | ext:ini | ext:log" ']},
+  {id:'dirindex',    risk:'HIGH',label:'Directory listings',           dorks:['site:{TARGET} intitle:"index of /"','site:{TARGET} intitle:"Index of" intext:"Parent Directory"']},
+];
+
+const extensions = ['PDF','DOC','DOCX','XLS','XLSX','PPT','PPTX','TXT','XML','CONF','LOG','SQL','JSON','ENV','BAK','PHP','ASP','ASPX','PY','RB','SH','KEY','PEM'];
+
+const wordpressDorks = [
+  'site:{TARGET} inurl:wp-login','site:{TARGET} inurl:wp-admin',
+  'site:{TARGET} inurl:wp-content','site:{TARGET} inurl:wp-json',
+  'site:{TARGET} "Powered by WordPress"','site:{TARGET} filetype:php inurl:wp-',
+];
+
+let selectedCats  = new Set();
+let selectedExts  = new Set();
+let customDorks   = [];
+let wordpressMode = false;
+let subdomainMode = false;
+let previewMode   = true;
+let showAll       = false;
+let currentEngine = 'google';
+let sessionCount  = 0;
+let totalDorksRun = 0;
+let targetHistory = [];
+
+try { targetHistory = JSON.parse(localStorage.getItem('reTH') || '[]'); } catch(e){}
+
+// ── BOOT ──────────────────────────────────────────────────────────────────────
+const bootLines = [
+  {t:'> Inicializando módulos de reconhecimento...', c:'var(--cyan)'},
+  {t:'> Carregando dork database [21 categorias]...', c:'var(--cyan)'},
+  {t:'> Carregando 23 extensões de arquivo...', c:'var(--cyan)'},
+  {t:'> Conectando engines: Google · Bing · Shodan...', c:'var(--cyan)'},
+  {t:'> Verificando histórico de alvos...', c:'var(--cyan)'},
+  {t:'> Sistema pronto. Bom hunting.', c:'var(--green)'},
+];
+
+function boot() {
+  const logo = document.getElementById('bootLogo');
+  const linesEl = document.getElementById('bootLines');
+  logo.style.display = 'block';
+  let i = 0;
+  function next() {
+    if (i >= bootLines.length) {
+      setTimeout(() => {
+        document.getElementById('bootScreen').classList.add('hidden');
+        document.getElementById('mainApp').style.opacity = '1';
+      }, 450);
+      return;
+    }
+    const d = document.createElement('div');
+    d.className = 'boot-line';
+    d.style.color = bootLines[i].c;
+    d.textContent = bootLines[i].t;
+    linesEl.appendChild(d);
+    requestAnimationFrame(() => requestAnimationFrame(() => d.classList.add('show')));
+    i++; setTimeout(next, 150);
+  }
+  setTimeout(next, 250);
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function renderCategories() {
+  document.getElementById('categoriesGrid').innerHTML = categories.map(c => `
+    <div class="cat-item ${selectedCats.has(c.id)?'selected':''}" onclick="toggleCat('${c.id}')">
+      <div class="cat-checkbox">${selectedCats.has(c.id)?'✓':''}</div>
+      <span class="cat-label">${c.label}</span>
+      <span class="risk-badge risk-${c.risk}">${c.risk}</span>
+    </div>`).join('');
+}
+
+function renderExtensions() {
+  document.getElementById('extGrid').innerHTML = extensions.map(e =>
+    `<div class="ext-tag ${selectedExts.has(e)?'selected':''}" onclick="toggleExt('${e}')">${e}</div>`
+  ).join('');
+}
+
+function renderHistory() {
+  const el = document.getElementById('targetHistory');
+  if (!targetHistory.length) { el.innerHTML=''; return; }
+  el.innerHTML = targetHistory.slice(0,6).map((h,i) =>
+    `<div class="hist-chip" onclick="loadHistory('${h}')">
+      ${h}<span class="hist-del" onclick="event.stopPropagation();removeHistory(${i})"> ✕</span>
+    </div>`
+  ).join('');
+}
+
+function renderCustomList() {
+  const el = document.getElementById('customList');
+  if (!customDorks.length) { el.innerHTML=''; return; }
+  el.innerHTML = customDorks.map((d,i) =>
+    `<div class="custom-dork-item"><span class="ctext">${d}</span><span class="rm" onclick="removeCustomDork(${i})">✕</span></div>`
+  ).join('');
+}
+
+// ── ACTIONS ───────────────────────────────────────────────────────────────────
+function toggleCat(id) { selectedCats.has(id)?selectedCats.delete(id):selectedCats.add(id); renderCategories(); updatePreview(); }
+function toggleExt(e)  { selectedExts.has(e)?selectedExts.delete(e):selectedExts.add(e); renderExtensions(); updatePreview(); }
+function selectAll()   { categories.forEach(c=>selectedCats.add(c.id)); renderCategories(); updatePreview(); }
+function clearAll()    { selectedCats.clear(); renderCategories(); updatePreview(); }
+function selectByRisk(r){ selectedCats.clear(); categories.filter(c=>c.risk===r).forEach(c=>selectedCats.add(c.id)); renderCategories(); updatePreview(); }
+
+function toggleOpt(type) {
+  if (type==='wordpress') { wordpressMode=!wordpressMode; document.getElementById('wploginToggle').classList.toggle('active',wordpressMode); }
+  else if (type==='subdomains') { subdomainMode=!subdomainMode; document.getElementById('subToggle').classList.toggle('active',subdomainMode); }
+  else if (type==='preview') { previewMode=!previewMode; document.getElementById('previewToggle').classList.toggle('active',previewMode); }
+  updatePreview();
+}
+
+function selectEngine(e) {
+  currentEngine = e;
+  ['google','bing','shodan'].forEach(eng => { const el=document.getElementById(eng+'Btn'); if(el) el.classList.toggle('active',eng===e); });
+  document.getElementById('engineLabel').textContent = e.charAt(0).toUpperCase()+e.slice(1);
+  updatePreview();
+}
+
+function addCustomDork() {
+  const inp = document.getElementById('customDorkInput');
+  const val = inp.value.trim(); if(!val) return;
+  customDorks.push(val); inp.value='';
+  renderCustomList(); updatePreview(); toast('Dork adicionado!');
+}
+function removeCustomDork(i) { customDorks.splice(i,1); renderCustomList(); updatePreview(); }
+function loadHistory(h) { document.getElementById('targetInput').value=h; updatePreview(); }
+function removeHistory(i) { targetHistory.splice(i,1); try{localStorage.setItem('reTH',JSON.stringify(targetHistory));}catch(e){} renderHistory(); }
+
+document.getElementById('customDorkInput').addEventListener('keydown', e=>{ if(e.key==='Enter') addCustomDork(); });
+document.getElementById('targetInput').addEventListener('input', updatePreview);
+
+// ── DORK BUILD ────────────────────────────────────────────────────────────────
+function getTarget() { return document.getElementById('targetInput').value.trim() || 'target.com'; }
+
+function buildDorks() {
+  const target = getTarget();
+  let dorks = [];
+  selectedCats.forEach(id => {
+    const cat = categories.find(c=>c.id===id);
+    if (cat) cat.dorks.forEach(d => dorks.push(d.replace(/{TARGET}/g,target)));
+  });
+  if (selectedExts.size > 0) dorks.push(`site:${target} filetype:${[...selectedExts].join(' OR filetype:')}`);
+  if (wordpressMode) wordpressDorks.forEach(d => dorks.push(d.replace(/{TARGET}/g,target)));
+  if (subdomainMode) { dorks.push(`site:*.${target}`); dorks.push(`site:${target} -www`); }
+  customDorks.forEach(d => dorks.push(d.replace(/{TARGET}/g,target)));
+  return dorks;
+}
+
+function buildUrl(dork) {
+  const enc = encodeURIComponent(dork);
+  if (currentEngine==='bing')   return `https://www.bing.com/search?q=${enc}`;
+  if (currentEngine==='shodan') return `https://www.shodan.io/search?query=${enc}`;
+  return `https://www.google.com/search?q=${enc}`;
+}
+
+// ── UI UPDATE ─────────────────────────────────────────────────────────────────
+function updatePreview() {
+  const dorks = buildDorks();
+  const n = dorks.length;
+  document.getElementById('tabCount').textContent = n;
+  document.getElementById('tabCountBottom').textContent = n;
+  document.getElementById('selCount').textContent = `${selectedCats.size} de ${categories.length} selecionadas`;
+  document.getElementById('targetDisplay').textContent = getTarget();
+
+  const preview = document.getElementById('dorkPreview');
+  const previewText = document.getElementById('dorkPreviewText');
+  if (n > 0 && previewMode) {
+    preview.classList.add('visible');
+    const visible = showAll ? dorks : dorks.slice(0,10);
+    previewText.innerHTML = visible.map((d,i)=>
+      `<div><span style="color:var(--dim);margin-right:6px">${String(i+1).padStart(2,'0')}.</span>${d}</div>`
+    ).join('') + (!showAll && n>10 ? `<div style="color:var(--dim);margin-top:6px;font-size:0.62rem">... +${n-10} dorks — clique em VER TODOS</div>` : '');
+  } else {
+    preview.classList.remove('visible');
+  }
+}
+
+function toggleShowAll() { showAll=!showAll; document.getElementById('showAllBtn').textContent=showAll?'RECOLHER':'VER TODOS'; updatePreview(); }
+
+function copyAllDorks() {
+  const dorks = buildDorks(); if(!dorks.length){toast('Nenhum dork.');return;}
+  navigator.clipboard.writeText(dorks.join('\n')).then(()=>toast('✓ Copiado!')).catch(()=>{
+    const ta=document.createElement('textarea'); ta.value=dorks.join('\n');
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); toast('✓ Copiado!');
+  });
+}
+
+function exportDorks() {
+  const target = getTarget(); const dorks = buildDorks(); if(!dorks.length){toast('⚠ Nenhum dork.');return;}
+  const content = [`# RECON ENGINE v2 — by roberbsa/trustm3`,`# Alvo: ${target}`,`# Engine: ${currentEngine}`,`# Gerado em: ${new Date().toLocaleString('pt-BR')}`,`# Total: ${dorks.length} dorks`,'', ...dorks].join('\n');
+  const blob = new Blob([content],{type:'text/plain'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=`recon_${target.replace(/[^a-z0-9]/gi,'_')}_${Date.now()}.txt`; a.click();
+  toast('⬇ Exportado!');
+}
+
+function launchRecon() {
+  const target = document.getElementById('targetInput').value.trim();
+  if (!target) { toast('⚠ Insira um alvo!'); return; }
+  const dorks = buildDorks();
+  if (!dorks.length) { toast('⚠ Selecione ao menos uma categoria!'); return; }
+  if (dorks.length > 12 && !confirm(`Abrir ${dorks.length} abas?\nPermita popups quando o browser solicitar.`)) return;
+
+  // save history
+  if (!targetHistory.includes(target)) {
+    targetHistory.unshift(target); if(targetHistory.length>8) targetHistory.pop();
+    try{localStorage.setItem('reTH',JSON.stringify(targetHistory));}catch(e){}
+    renderHistory();
+  }
+
+  dorks.forEach((d,i) => setTimeout(()=>window.open(buildUrl(d),'_blank'), i*130));
+  sessionCount++; totalDorksRun+=dorks.length;
+  document.getElementById('sessionCount').textContent=sessionCount;
+  document.getElementById('totalDorksRun').textContent=totalDorksRun;
+  toast(`⚡ ${dorks.length} dorks disparados!`);
+}
+
+function toast(msg) {
+  const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show');
+  clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('show'),2500);
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+renderCategories(); renderExtensions(); renderHistory(); renderCustomList(); updatePreview(); boot();
+</script>
+</body>
+</html>
